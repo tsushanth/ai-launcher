@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Launcher</string>
+    <string name="launcher_settings">Launcher Settings</string>
+
+    <!-- Home Screen -->
+    <string name="search_hint">Search apps, contacts, web…</string>
+    <string name="add_widget">Add Widget</string>
+    <string name="wallpaper">Wallpaper</string>
+    <string name="settings">Settings</string>
+
+    <!-- App Drawer -->
+    <string name="all_apps">All Apps</string>
+    <string name="recent_apps">Recent</string>
+    <string name="no_apps_found">No apps found</string>
+
+    <!-- Folders -->
+    <string name="create_folder">Create Folder</string>
+    <string name="folder_name">Folder Name</string>
+    <string name="unnamed_folder">Unnamed</string>
+
+    <!-- AI Assistant -->
+    <string name="ai_assistant">AI Assistant</string>
+    <string name="ask_anything">Ask anything…</string>
+    <string name="quota_exceeded">Usage limit reached. Try again later.</string>
+
+    <!-- Settings -->
+    <string name="grid_size">Grid Size</string>
+    <string name="icon_size">Icon Size</string>
+    <string name="theme">Theme</string>
+    <string name="enable_ai">Enable AI Assistant</string>
+    <string name="extensions">Extensions</string>
+    <string name="about">About</string>
+
+    <!-- Permissions -->
+    <string name="permission_usage_stats_title">Usage Access Required</string>
+    <string name="permission_usage_stats_message">AI Launcher needs usage access to provide context-aware assistance.</string>
+    <string name="permission_notifications_title">Notification Access</string>
+    <string name="permission_notifications_message">Allow AI Launcher to read notifications for better context.</string>
+</resources>
