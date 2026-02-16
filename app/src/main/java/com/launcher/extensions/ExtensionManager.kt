@@ -278,16 +278,20 @@ class ExtensionManager(private val context: Context) {
 
     /**
      * Load all installed extensions from the extensions directory.
+     * Also loads built-in extensions from the registry.
      */
     suspend fun loadInstalledExtensions() {
         if (!extensionsDir.exists()) {
             extensionsDir.mkdirs()
-            return
         }
 
+        // Load built-in extensions from registry
+        loadBuiltInExtensions()
+
+        // Load extensions from files
         val extensionFiles = extensionsDir.listFiles { file ->
             file.isFile && file.extension == "kts"
-        } ?: return
+        } ?: emptyArray()
 
         extensionFiles.forEach { file ->
             try {
@@ -298,6 +302,32 @@ class ExtensionManager(private val context: Context) {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load extension from ${file.name}", e)
+            }
+        }
+    }
+
+    /**
+     * Load built-in extensions from the registry.
+     */
+    private fun loadBuiltInExtensions() {
+        val builtInIds = listOf(
+            "com.launcher.calculator",
+            "com.launcher.weather",
+            "com.launcher.notes"
+        )
+
+        builtInIds.forEach { extensionId ->
+            try {
+                // Create a dummy file reference for the loader
+                val dummyFile = File(extensionsDir, "$extensionId.kts")
+
+                val extension = extensionLoader.loadFromFile(dummyFile)
+                if (extension != null) {
+                    _loadedExtensions.value = _loadedExtensions.value + (extension.id to extension)
+                    Log.i(TAG, "Loaded built-in extension: ${extension.id} (${extension.name})")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load built-in extension $extensionId", e)
             }
         }
     }
