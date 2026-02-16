@@ -10,6 +10,7 @@ import com.launcher.data.models.AppInfo
 import com.launcher.data.models.DesktopItem
 import com.launcher.data.models.GridPosition
 import com.launcher.data.models.HomeScreenLayout
+import com.launcher.extensions.ExtensionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class HomeScreenViewModel(application: Application) : AndroidViewModel(application) {
     private val packageManager = application.packageManager
     private val repository = LauncherRepository(application)
+    private val extensionManager = ExtensionManager(application)
 
     // All installed apps
     private val _allApps = MutableStateFlow<List<AppInfo>>(emptyList())
@@ -52,6 +54,17 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
     init {
         loadInstalledApps()
         initializeDefaultLayout()
+        initializeExtensions()
+    }
+
+    private fun initializeExtensions() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Load installed extensions
+            extensionManager.loadInstalledExtensions()
+
+            // Trigger launcher start event
+            extensionManager.onLauncherStart()
+        }
     }
 
     fun loadInstalledApps() {
@@ -163,4 +176,17 @@ class HomeScreenViewModel(application: Application) : AndroidViewModel(applicati
             getAppInfo(packageName)
         }
     }
+
+    // Notify extensions that an app was launched
+    fun notifyAppLaunched(packageName: String) {
+        extensionManager.onAppLaunched(packageName)
+    }
+
+    // Notify extensions that home screen was long-pressed
+    fun notifyHomeScreenLongPress(position: GridPosition) {
+        extensionManager.onHomeScreenLongPress(position)
+    }
+
+    // Get extension manager (for UI to access)
+    fun getExtensionManager(): ExtensionManager = extensionManager
 }

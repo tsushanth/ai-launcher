@@ -82,7 +82,7 @@ fun WallpaperPickerDialog(
 
                 // Default wallpaper
                 WallpaperOption(
-                    icon = Icons.Default.WallpaperOutlined,
+                    icon = Icons.Default.Wallpaper,
                     title = "Default Wallpaper",
                     description = "Reset to system default",
                     onClick = {

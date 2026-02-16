@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.launcher.data.models.AppInfo
+import com.launcher.extensions.ExtensionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class AppDrawerViewModel(application: Application) : AndroidViewModel(application) {
     private val packageManager = application.packageManager
+    private val extensionManager = ExtensionManager(application)
 
     private val _allApps = MutableStateFlow<List<AppInfo>>(emptyList())
     val allApps: StateFlow<List<AppInfo>> = _allApps.asStateFlow()
@@ -26,6 +28,21 @@ class AppDrawerViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         loadInstalledApps()
+        notifyDrawerOpened()
+    }
+
+    private fun notifyDrawerOpened() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Load extensions
+            extensionManager.loadInstalledExtensions()
+
+            // Notify drawer opened
+            extensionManager.onAppDrawerOpened()
+        }
+    }
+
+    fun notifyAppLaunched(packageName: String) {
+        extensionManager.onAppLaunched(packageName)
     }
 
     fun updateSearchQuery(query: String) {

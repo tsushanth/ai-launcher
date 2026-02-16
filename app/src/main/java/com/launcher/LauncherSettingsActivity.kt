@@ -8,10 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.launcher.ui.ExtensionsScreen
 import com.launcher.ui.theme.LauncherTheme
 
 class LauncherSettingsActivity : ComponentActivity() {
@@ -24,9 +25,18 @@ class LauncherSettingsActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SettingsScreen(
-                        onBack = { finish() }
-                    )
+                    var showExtensions by remember { mutableStateOf(false) }
+
+                    if (showExtensions) {
+                        ExtensionsScreen(
+                            onBack = { showExtensions = false }
+                        )
+                    } else {
+                        SettingsScreen(
+                            onBack = { finish() },
+                            onOpenExtensions = { showExtensions = true }
+                        )
+                    }
                 }
             }
         }
@@ -36,7 +46,8 @@ class LauncherSettingsActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenExtensions: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -125,11 +136,13 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsCard {
+                SettingsCard(
+                    onClick = onOpenExtensions
+                ) {
                     Column {
-                        Text("Extension Marketplace", style = MaterialTheme.typography.bodyLarge)
+                        Text("Manage Extensions", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Browse and install extensions (Coming soon)",
+                            "Enable and configure launcher extensions",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -164,10 +177,13 @@ fun SettingsScreen(
 
 @Composable
 fun SettingsCard(
+    onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     Surface(
+        onClick = onClick ?: {},
         modifier = Modifier.fillMaxWidth(),
+        enabled = onClick != null,
         tonalElevation = 1.dp,
         shape = MaterialTheme.shapes.medium
     ) {

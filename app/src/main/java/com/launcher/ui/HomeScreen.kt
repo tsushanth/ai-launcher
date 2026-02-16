@@ -96,7 +96,10 @@ fun HomeScreen(
                     when (item) {
                         is DesktopItem.AppShortcut -> {
                             val intent = context.packageManager.getLaunchIntentForPackage(item.packageName)
-                            intent?.let { context.startActivity(it) }
+                            intent?.let {
+                                context.startActivity(it)
+                                viewModel.notifyAppLaunched(item.packageName)
+                            }
                         }
                         is DesktopItem.Folder -> {
                             selectedFolder = item
@@ -123,7 +126,10 @@ fun HomeScreen(
                 apps = dockApps,
                 onAppClick = { app ->
                     val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
-                    intent?.let { context.startActivity(it) }
+                    intent?.let {
+                        context.startActivity(it)
+                        viewModel.notifyAppLaunched(app.packageName)
+                    }
                 },
                 onAppLongPress = { app ->
                     longPressedItem = LongPressItem.DockApp(app.packageName)
@@ -162,6 +168,7 @@ fun HomeScreen(
                 val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
                 intent?.let {
                     context.startActivity(it)
+                    viewModel.notifyAppLaunched(app.packageName)
                     selectedFolder = null
                 }
             },
