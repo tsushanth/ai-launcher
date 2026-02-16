@@ -68,34 +68,53 @@ ai-launcher/
    - Basic settings UI
    - Placeholder for grid size, icon pack, AI, extensions
 
-5. **Data Models**
+5. **Data Models & Database**
    - `AppInfo` - App metadata with search scoring
    - `HomeScreenLayout` - Grid layout, desktop items (apps, folders, widgets)
-   - Room database ready (converters included)
+   - Room database implementation (LauncherDatabase, HomeScreenDao)
+   - LauncherRepository for data operations
+   - Type converters for complex data types
 
-6. **AndroidManifest**
+6. **Folder Management** ✅
+   - FolderIcon with preview grid
+   - FolderDialog for viewing/managing contents
+   - CreateFolderDialog for new folders
+   - Rename folders
+   - Add/remove apps from folders
+   - Repository methods for folder operations
+
+7. **Wallpaper Support** ✅
+   - LauncherWallpaperManager utility
+   - Static wallpaper from gallery
+   - Live wallpaper picker integration
+   - WallpaperPickerDialog UI
+   - Clear/reset to default wallpaper
+
+8. **Widget Hosting** ✅
+   - LauncherWidgetHost with AppWidgetHost
+   - Widget allocation and lifecycle
+   - WidgetPickerDialog to browse widgets
+   - Widget configuration support
+   - Size calculation utilities
+
+9. **AndroidManifest**
    - HOME intent filter (can be set as default launcher)
    - Permissions: INTERNET, FOREGROUND_SERVICE, PACKAGE_USAGE_STATS, etc.
    - Queries declaration for launcher apps
 
-### 🚧 TODO (Remaining Phase 1 Tasks)
+### 🚧 TODO (Phase 1 Integration)
 
-7. **Folder Management**
-   - Create folders by dragging app onto app
-   - Folder UI (grid of apps)
-   - Add/remove apps from folders
-   - Rename folders
+10. **Home Screen Integration**
+   - Integrate folder icons into home screen grid
+   - Add widget views to home screen
+   - Long-press menu for items (edit, remove, add to folder)
+   - Drag and drop for rearranging
+   - Persist layout to database
 
-8. **Wallpaper Support**
-   - Static wallpaper picker
-   - Live wallpaper support
-   - Video wallpaper (custom service)
-
-9. **Widget Hosting**
-   - AppWidgetHost implementation
-   - Widget picker
-   - Widget placement on home screen
-   - Widget resizing
+11. **Testing & Polish**
+   - Test as default launcher on device
+   - Performance optimization
+   - Fix edge cases
 
 ## How to Build & Run
 
