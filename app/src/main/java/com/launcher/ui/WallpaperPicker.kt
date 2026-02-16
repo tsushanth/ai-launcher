@@ -183,12 +183,5 @@ private fun WallpaperOption(
     }
 }
 
-// Missing icon placeholder
-private val Icons.Default.WallpaperOutlined: androidx.compose.ui.graphics.vector.ImageVector
-    get() = Icons.Default.Wallpaper
-
-private val Icons.Default.Animation: androidx.compose.ui.graphics.vector.ImageVector
-    get() = Icons.Default.Animation
-
-private val Icons.Default.Image: androidx.compose.ui.graphics.vector.ImageVector
-    get() = Icons.Default.Image
+// Note: Using available Material Icons
+// Icons.Default.Wallpaper, AutoAwesome, Image should already exist in material-icons-extended
