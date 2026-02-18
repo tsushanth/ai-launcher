@@ -22,7 +22,7 @@ ai-launcher/
 │   │   │   │   └── models/
 │   │   │   │       ├── AppInfo.kt          # App data model ✅
 │   │   │   │       └── HomeScreenLayout.kt # Layout models ✅
-│   │   │   ├── extensions/                 # Extension system (TODO)
+│   │   │   ├── extensions/                 # Extension system ✅
 │   │   │   ├── themes/                     # Theme engine (TODO)
 │   │   │   ├── ai/                         # AI integration (TODO)
 │   │   │   └── utils/                      # Utilities
@@ -33,8 +33,8 @@ ai-launcher/
 │   │       │   └── themes.xml              # App themes ✅
 │   │       └── xml/                        # Service configs
 │   └── build.gradle.kts                    # App dependencies ✅
-├── launcher-backend/                       # Express.js backend (TODO)
-├── launcher-worker/                        # Claude worker (TODO)
+├── launcher-backend/                       # Express.js backend ✅
+├── launcher-worker/                        # Claude worker ✅ (+ GCP deploy scripts)
 ├── build.gradle.kts                        # Project build config ✅
 ├── settings.gradle.kts                     # Project settings ✅
 └── gradle.properties                       # Gradle properties ✅
@@ -302,6 +302,11 @@ TBD
 
 ---
 
-**Current Status**: Phase 1 in progress (70% complete)
+**Current Status**: Phase 1 ✅ + Phase 2 ✅ + Phase 4 (backend/worker) 🚧
 
-**Next Milestone**: Complete Phase 1 (folders, wallpaper, widgets) → Ready for testing as basic launcher
+**Phase 1 (Core Launcher)**: Complete — home screen, app drawer, folders, wallpaper, widgets
+**Phase 2 (Extensions)**: Complete — LauncherExtension SDK, 3 built-in extensions, management UI
+**Phase 4 (AI Backend/Worker)**: Backend + worker built, GCP VM set up
+**Phase 3 (Themes)**: Coming next
+
+See [INSTALLATION.md](INSTALLATION.md) for full setup instructions.
