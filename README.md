@@ -1,312 +1,128 @@
 # AI Launcher for Android
 
-A comprehensive Android launcher replacement with AI capabilities, OpenClaw-style extension system, and AI-powered theme generation.
+An Android launcher replacement with fuzzy app search, folder management, widget hosting, an OpenClaw-style extension system, and an optional Claude AI assistant.
 
-## Project Structure
+## Features
 
-```
-ai-launcher/
-├── app/                                    # Android application
-│   ├── src/main/
-│   │   ├── AndroidManifest.xml             # Launcher manifest with HOME intent
-│   │   ├── java/com/launcher/
-│   │   │   ├── HomeScreenActivity.kt       # Main launcher activity ✅
-│   │   │   ├── AppDrawerActivity.kt        # App drawer with search ✅
-│   │   │   ├── LauncherSettingsActivity.kt # Settings ✅
-│   │   │   ├── ui/
-│   │   │   │   ├── HomeScreen.kt           # Home screen UI ✅
-│   │   │   │   ├── AppDrawer.kt            # App drawer UI ✅
-│   │   │   │   ├── theme/                  # Material 3 theming ✅
-│   │   │   │   └── viewmodels/             # ViewModels ✅
-│   │   │   ├── data/
-│   │   │   │   └── models/
-│   │   │   │       ├── AppInfo.kt          # App data model ✅
-│   │   │   │       └── HomeScreenLayout.kt # Layout models ✅
-│   │   │   ├── extensions/                 # Extension system ✅
-│   │   │   ├── themes/                     # Theme engine (TODO)
-│   │   │   ├── ai/                         # AI integration (TODO)
-│   │   │   └── utils/                      # Utilities
-│   │   └── res/
-│   │       ├── values/
-│   │       │   ├── strings.xml             # String resources ✅
-│   │       │   ├── colors.xml              # Color scheme ✅
-│   │       │   └── themes.xml              # App themes ✅
-│   │       └── xml/                        # Service configs
-│   └── build.gradle.kts                    # App dependencies ✅
-├── launcher-backend/                       # Express.js backend ✅
-├── launcher-worker/                        # Claude worker ✅ (+ GCP deploy scripts)
-├── build.gradle.kts                        # Project build config ✅
-├── settings.gradle.kts                     # Project settings ✅
-└── gradle.properties                       # Gradle properties ✅
-```
-
-## What's Been Built (Phase 1 - Core Launcher)
-
-### ✅ Completed
-
-1. **Project Setup**
-   - Jetpack Compose + Material 3
-   - Android project structure
-   - Gradle build configuration
-   - Theme system (Material You)
-
-2. **Home Screen**
-   - Launcher activity with HOME intent filter
-   - Search bar (opens app drawer)
-   - Dock with 5 app slots
-   - Swipe up gesture to open app drawer
-   - Settings button
-
-3. **App Drawer**
-   - Alphabetical app list
-   - Real-time fuzzy search
-   - Search score algorithm (exact match, starts with, contains, acronym, package name)
-   - Pull from installed apps
-   - Filter system/user apps
-
-4. **Settings Activity**
-   - Basic settings UI
-   - Placeholder for grid size, icon pack, AI, extensions
-
-5. **Data Models & Database**
-   - `AppInfo` - App metadata with search scoring
-   - `HomeScreenLayout` - Grid layout, desktop items (apps, folders, widgets)
-   - Room database implementation (LauncherDatabase, HomeScreenDao)
-   - LauncherRepository for data operations
-   - Type converters for complex data types
-
-6. **Folder Management** ✅
-   - FolderIcon with preview grid
-   - FolderDialog for viewing/managing contents
-   - CreateFolderDialog for new folders
-   - Rename folders
-   - Add/remove apps from folders
-   - Repository methods for folder operations
-
-7. **Wallpaper Support** ✅
-   - LauncherWallpaperManager utility
-   - Static wallpaper from gallery
-   - Live wallpaper picker integration
-   - WallpaperPickerDialog UI
-   - Clear/reset to default wallpaper
-
-8. **Widget Hosting** ✅
-   - LauncherWidgetHost with AppWidgetHost
-   - Widget allocation and lifecycle
-   - WidgetPickerDialog to browse widgets
-   - Widget configuration support
-   - Size calculation utilities
-
-9. **AndroidManifest**
-   - HOME intent filter (can be set as default launcher)
-   - Permissions: INTERNET, FOREGROUND_SERVICE, PACKAGE_USAGE_STATS, etc.
-   - Queries declaration for launcher apps
-
-### 🚧 TODO (Phase 1 Integration)
-
-10. **Home Screen Integration**
-   - Integrate folder icons into home screen grid
-   - Add widget views to home screen
-   - Long-press menu for items (edit, remove, add to folder)
-   - Drag and drop for rearranging
-   - Persist layout to database
-
-11. **Testing & Polish**
-   - Test as default launcher on device
-   - Performance optimization
-   - Fix edge cases
-
-## How to Build & Run
-
-### Prerequisites
-
-- Android Studio Hedgehog or later
-- JDK 17
-- Android SDK (API 26+)
-- Physical Android device or emulator
-
-### Steps
-
-1. **Clone the repository**
-   ```bash
-   cd ~/Documents/GitHub/ai-launcher
-   ```
-
-2. **Open in Android Studio**
-   - File → Open → Select `ai-launcher` folder
-   - Wait for Gradle sync
-
-3. **Add Firebase (Optional for now)**
-   - Download `google-services.json` from Firebase Console
-   - Place in `app/` directory
-
-4. **Build and Run**
-   - Click Run (▶️) or `Shift + F10`
-   - Select device/emulator
-   - App will install as "AI Launcher"
-
-5. **Set as Default Launcher**
-   - Press Home button on device
-   - Select "AI Launcher"
-   - Choose "Always" or "Just once"
-
-## Current Features
-
-### Home Screen
-- **Search Bar**: Tap to open app drawer with search
-- **Dock**: Shows 5 favorite apps (currently first 5 alphabetically)
-- **Gestures**: Swipe up anywhere to open app drawer
-- **Settings**: Top-right gear icon
-
-### App Drawer
-- **Search**: Real-time fuzzy search as you type
-- **Scoring**: Smart app ranking (exact match > starts with > contains > acronym)
-- **List**: Alphabetically sorted apps
-- **System Apps**: Tagged with "System app" label
-
-### Settings
-- Grid size (placeholder)
-- Icon pack (placeholder)
-- AI Assistant toggle (placeholder)
-- Extensions marketplace (placeholder)
-- Version info
-
-## Next Steps
-
-### Immediate (Complete Phase 1)
-1. Implement folder creation and management
-2. Add static wallpaper support
-3. Implement basic widget hosting
-4. Test setting as default launcher on various devices
-
-### Phase 2: Extension System (Weeks 5-6)
-- Extension SDK (`LauncherExtension` interface)
-- Kotlin script engine for runtime extension loading
-- Extension marketplace backend
-- Sample extensions (weather, calculator, notes)
-
-### Phase 3: Theme System (Weeks 7-8)
-- Theme engine (colors, icon packs, wallpapers)
-- AI theme generation via Claude
-- Theme suggestions based on occasions (birthday, holidays, etc.)
-- Material You dynamic colors
-
-### Phase 4: AI Integration (Weeks 9-11)
-- Launcher worker (Express.js + Claude CLI on GCP VM)
-- Backend routes (launcher, themes, extensions, sync)
-- Context collector (current app, notifications, clipboard, calendar)
-- AI overlay (floating orb)
-- SSE streaming for real-time responses
-
-### Phase 5: Polish (Weeks 12-14)
-- Gestures (pinch for settings, swipe down for notifications)
-- App shortcuts (long-press menu)
-- Widget resizing
-- Cloud sync (Supabase)
-- Analytics (Firebase)
-- Performance optimization
-
-### Phase 6: Beta & Launch (Weeks 15-16)
-- Beta testing
-- Privacy policy
-- Play Store submission
+- **Home Screen** — customizable grid layout, dock, swipe-up gesture to app drawer
+- **App Drawer** — real-time fuzzy search (exact match, starts-with, contains, acronym)
+- **Folders** — drag apps together, rename, add/remove apps
+- **Wallpaper** — static from gallery, live wallpaper picker
+- **Widgets** — browse and add Android widgets to home screen
+- **Extensions** — plugin system (OpenClaw-style) with lifecycle hooks and AI query hooks
+- **AI Assistant** *(optional)* — Claude-powered assistant with launcher context, streamed via SSE
 
 ## Architecture
 
-### Android App
-- **UI**: Jetpack Compose + Material 3
-- **State**: ViewModel + StateFlow (MVI pattern)
-- **Database**: Room (for layouts, settings, themes)
-- **Preferences**: DataStore
-- **Networking**: Retrofit + OkHttp + SSE
+```
+Android App (Jetpack Compose)
+       │
+       ▼
+launcher-backend (Express.js)   ← handles auth, themes, extension marketplace
+       │
+       ▼
+launcher-worker (Node.js)       ← runs Claude Code CLI, streams AI responses via SSE
+       │
+       ▼
+  Claude Code CLI               ← your Anthropic subscription, on a GCP e2-micro VM (free tier)
+```
 
-### Backend (Not yet built)
-- **Framework**: Express.js
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Firebase Authentication
-- **Storage**: Supabase Storage (themes, extensions)
+The **launcher-worker** is a small Node.js server that wraps the Claude Code CLI. It spawns a Claude process per conversation, injects launcher context (current app, notifications, clipboard), and streams the response back as Server-Sent Events. This means the AI runs against your own Anthropic account — no separate API key billing.
 
-### Worker (Not yet built)
-- **Runtime**: Node.js on GCP e2-micro VM
-- **AI**: Claude Code CLI
-- **Streaming**: SSE (Server-Sent Events)
-- **Pattern**: Copied from riddle-verse/game-worker
+## Install the Launcher (Android App)
 
-## Dependencies
+### Prerequisites
 
-Key dependencies (see `app/build.gradle.kts`):
-- Jetpack Compose (UI)
-- Material 3 (Design system)
-- Room (Database)
-- DataStore (Preferences)
-- Firebase (Auth, Analytics, Crashlytics)
-- Retrofit + OkHttp (Networking + SSE)
-- Coil (Image loading)
-- Kotlin Coroutines (Async)
-- Kotlin Scripting (Extensions)
+- Android Studio Hedgehog (2023.1) or later — [download](https://developer.android.com/studio)
+- JDK 17 (bundled with Android Studio)
+- Android SDK API 26+ (Android 8.0 minimum)
+- Android device with USB debugging enabled, or an emulator
 
-## Testing
+### Steps
 
-### Unit Tests
-- `AppInfo.calculateSearchScore()` - Search algorithm
-- Theme color validation
-- Extension loader
+```bash
+git clone https://github.com/tsushanth/ai-launcher.git
+cd ai-launcher
+```
 
-### Integration Tests
-- Home screen layout persistence
-- App drawer search
-- Settings persistence
+**In Android Studio:**
+1. File → Open → select the `ai-launcher` folder
+2. Wait for Gradle sync to complete
+3. Connect your Android device via USB
+4. Click Run (▶) or press `Shift+F10`
+5. Select your device — the app installs as **AI Launcher**
 
-### E2E Tests
-- Set as default launcher
-- Launch app from home screen
-- Launch app from app drawer
-- Create folder
-- Apply theme
+**Or via command line:**
 
-## Performance Targets
-- App drawer scroll: 60 FPS
-- App search: < 100ms response time
-- Memory usage: < 150MB baseline
-- Battery drain: < 2% per day
+```bash
+# Set your Android SDK path
+echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 
-## Privacy & Permissions
+# Build and install
+./gradlew installDebug
+```
 
-### Required Permissions
-- `INTERNET` - API calls to backend
-- `FOREGROUND_SERVICE` - AI overlay
-- `HOME` - Default launcher
+### Set as Default Launcher
 
-### Optional Permissions (for AI context)
-- `PACKAGE_USAGE_STATS` - Current app detection
-- `BIND_NOTIFICATION_LISTENER_SERVICE` - Notification access
-- `READ_CALENDAR` - Calendar events
-- `ACCESS_FINE_LOCATION` - Location context
-- `BIND_ACCESSIBILITY_SERVICE` - Screen text extraction
+1. Press the **Home button** on your device
+2. Select **AI Launcher** from the picker
+3. Tap **Always**
 
-All context data is sent to backend ONLY when user sends AI message. No continuous tracking.
+To revert: Settings → Apps → Default apps → Home app → choose your previous launcher.
 
-## Contributing
+### What You Get (No AI Required)
 
-This is a personal project following the OpenClaw model. Extension system will allow community contributions via the marketplace.
+- Home screen with search bar and dock
+- Swipe up → App Drawer with fuzzy search
+- Long-press items for folder/settings options
+- Gear icon (⚙) → Settings → Manage Extensions (3 built-in: Calculator, Weather, Notes)
 
-## License
+## Enable the AI Assistant
 
-TBD
+The AI features require running the backend and worker separately. See:
+
+**[INSTALLATION.md](INSTALLATION.md)** — full setup for `launcher-backend`, `launcher-worker`, and GCP VM deployment
+
+## Project Status
+
+| Phase | What | Status |
+|-------|------|--------|
+| 1 | Core launcher (home screen, drawer, folders, wallpaper, widgets) | ✅ Complete |
+| 2 | Extension system (SDK, built-in extensions, management UI) | ✅ Complete |
+| 4 | AI backend + Claude worker + GCP deployment | 🚧 Backend/worker built, Android overlay pending |
+| 3 | Theme engine + AI theme generation | ⏳ Next |
+| 5 | Polish, gestures, cloud sync | ⏳ Pending |
+| 6 | Beta + Play Store | ⏳ Pending |
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Android UI | Jetpack Compose + Material 3 |
+| State management | ViewModel + StateFlow |
+| Local database | Room |
+| Networking | Retrofit + OkHttp + SSE |
+| Backend | Express.js |
+| Database | Supabase (PostgreSQL) |
+| Auth | Firebase Authentication |
+| AI runtime | Claude Code CLI (Node.js wrapper) |
+| Hosting | GCP e2-micro VM (free tier) |
+
+## Permissions
+
+| Permission | Required | Purpose |
+|-----------|----------|---------|
+| `HOME` | Yes | Act as default launcher |
+| `INTERNET` | Yes | Backend API calls |
+| `FOREGROUND_SERVICE` | Yes | AI overlay |
+| `PACKAGE_USAGE_STATS` | Optional | Detect current app for AI context |
+| `BIND_NOTIFICATION_LISTENER_SERVICE` | Optional | Read notifications for AI context |
+| `READ_CALENDAR` | Optional | Calendar events for theme suggestions |
+
+Context data is only sent to the backend when the user actively sends an AI message — no background tracking.
 
 ## Credits
 
-- Inspired by OpenClaw desktop launcher
-- Architecture patterns from riddle-verse project
+- Inspired by [OpenClaw](https://github.com/openclaw/openclaw) desktop launcher
+- Claude worker pattern from riddle-verse project
 - Built with Claude Code
-
----
-
-**Current Status**: Phase 1 ✅ + Phase 2 ✅ + Phase 4 (backend/worker) 🚧
-
-**Phase 1 (Core Launcher)**: Complete — home screen, app drawer, folders, wallpaper, widgets
-**Phase 2 (Extensions)**: Complete — LauncherExtension SDK, 3 built-in extensions, management UI
-**Phase 4 (AI Backend/Worker)**: Backend + worker built, GCP VM set up
-**Phase 3 (Themes)**: Coming next
-
-See [INSTALLATION.md](INSTALLATION.md) for full setup instructions.

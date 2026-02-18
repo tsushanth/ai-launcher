@@ -1,89 +1,32 @@
-# AI Launcher - Complete Installation Guide
+# AI Launcher - AI Setup Guide
 
-Step-by-step setup for all three components: Android app, backend server, and AI worker.
+This guide covers setting up the AI features: the backend server and Claude worker. For the Android app install, see the [README](README.md).
+
+## What Is the Claude Worker?
+
+The **launcher-worker** is a small Node.js HTTP server that bridges the Android app to Claude AI. When you send a message in the launcher:
+
+1. The Android app sends your message + current context (which app is open, clipboard, recent notifications) to **launcher-backend**
+2. The backend authenticates the request and forwards it to **launcher-worker**
+3. The worker spawns a **Claude Code CLI** process, injects the context as a system prompt, and streams Claude's response back as Server-Sent Events (SSE)
+4. The Android app displays the response word-by-word as it arrives
+
+The worker runs on a **GCP e2-micro VM** (free tier, ~$0/month). It uses your own Anthropic Claude subscription via the CLI — no separate API key or per-token billing.
 
 ---
 
 ## Table of Contents
 
-1. [Android App](#1-android-app)
-2. [Launcher Backend](#2-launcher-backend)
-3. [Launcher Worker (Local)](#3-launcher-worker-local)
-4. [Launcher Worker (GCP VM)](#4-launcher-worker-gcp-vm)
-5. [Connect Everything](#5-connect-everything)
-6. [Verify the Full Stack](#6-verify-the-full-stack)
-7. [Troubleshooting](#7-troubleshooting)
+1. [Launcher Backend](#1-launcher-backend)
+2. [Launcher Worker (Local)](#2-launcher-worker-local)
+3. [Launcher Worker (GCP VM)](#3-launcher-worker-gcp-vm)
+4. [Connect Everything](#4-connect-everything)
+5. [Verify the Full Stack](#5-verify-the-full-stack)
+6. [Troubleshooting](#6-troubleshooting)
 
 ---
 
-## 1. Android App
-
-### Prerequisites
-
-- **Android Studio** Hedgehog (2023.1) or later
-  Download: https://developer.android.com/studio
-- **JDK 17** (bundled with Android Studio or install separately)
-- **Android SDK** API 26+ (Android 8.0 Oreo minimum)
-- **Physical Android device** (recommended) or emulator API 26+
-- **USB debugging enabled** on your device
-  Settings → Developer Options → USB Debugging
-
-### Build & Install
-
-**Option A: Android Studio (Recommended)**
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/tsushanth/ai-launcher.git
-cd ai-launcher
-
-# 2. Open in Android Studio
-# File → Open → Select the ai-launcher folder
-# Wait for Gradle sync (first time takes 2-3 minutes)
-
-# 3. Connect device via USB, then click Run (▶️) or press Shift+F10
-```
-
-**Option B: Command Line**
-
-```bash
-# Prerequisites: Android SDK with adb and ANDROID_HOME set
-cd ai-launcher
-
-# Create local.properties with your SDK path
-echo "sdk.dir=$ANDROID_HOME" > local.properties
-
-# Build the APK
-./gradlew assembleDebug
-
-# Install on connected device
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-
-# Or build + install in one step
-./gradlew installDebug
-```
-
-### Set as Default Launcher
-
-1. Press the **Home button** on your Android device
-2. A dialog appears: "Choose a home app" or "Select launcher"
-3. Select **AI Launcher**
-4. Tap **Always** (to make it permanent) or **Just once** (to test)
-
-To revert to your previous launcher:
-- Settings → Apps → Default apps → Home app → Select your previous launcher
-
-### First Launch
-
-When first set as default:
-1. The home screen appears with a search bar at the top and dock at the bottom
-2. Swipe up to open the **App Drawer** with fuzzy search
-3. Tap the gear icon (⚙️) in the top-right for **Settings**
-4. In Settings, tap **Manage Extensions** to see the 3 built-in extensions
-
----
-
-## 2. Launcher Backend
+## 1. Launcher Backend
 
 The backend handles AI routing, theme generation, settings sync, and extension marketplace.
 
@@ -155,7 +98,7 @@ curl http://localhost:3000/health
 
 ---
 
-## 3. Launcher Worker (Local)
+## 2. Launcher Worker (Local)
 
 The worker runs Claude Code CLI to power AI conversations. Run this locally if you have Claude CLI installed, or on a GCP VM (see Section 4).
 
@@ -244,7 +187,7 @@ curl -X POST http://localhost:3456/chat \
 
 ---
 
-## 4. Launcher Worker (GCP VM)
+## 3. Launcher Worker (GCP VM)
 
 Run the worker on a free GCP e2-micro VM so the AI is always available.
 
@@ -395,7 +338,7 @@ curl http://$EXTERNAL_IP:3456/health
 
 ---
 
-## 5. Connect Everything
+## 4. Connect Everything
 
 ### Update Backend to Point to Worker
 
@@ -427,7 +370,7 @@ Start in this order:
 
 ---
 
-## 6. Verify the Full Stack
+## 5. Verify the Full Stack
 
 ### Check All Services
 
@@ -468,27 +411,7 @@ You should see a streaming SSE response with Claude's reply.
 
 ---
 
-## 7. Troubleshooting
-
-### Android Build Errors
-
-**`sdk.dir` not found:**
-```bash
-echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
-```
-
-**Gradle wrapper not executable:**
-```bash
-chmod +x gradlew
-```
-
-**Build fails with Firebase error:**
-The Firebase plugin is disabled by default. If you see Firebase errors, check `app/build.gradle.kts` - the `google-services` plugin line should be commented out.
-
-**Manifest namespace error:**
-Ensure `AndroidManifest.xml` has `xmlns:tools="http://schemas.android.com/tools"` on the root `<manifest>` element.
-
----
+## 6. Troubleshooting
 
 ### Backend Won't Start
 
