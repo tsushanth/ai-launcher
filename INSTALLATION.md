@@ -1,170 +1,191 @@
 # AI Launcher - AI Setup Guide
 
-This guide covers setting up the AI features: the backend server and Claude worker. For the Android app install, see the [README](README.md).
+This guide covers setting up the AI features. For the Android app install, see the [README](README.md).
 
-## What Is the Claude Worker?
+## How It Works
 
-The **launcher-worker** is a small Node.js HTTP server that bridges the Android app to Claude AI. When you send a message in the launcher:
+The **launcher-worker** is a small Node.js server you self-host anywhere. The Android app connects to it directly — no intermediary needed for AI chat.
 
-1. The Android app sends your message + current context (which app is open, clipboard, recent notifications) to **launcher-backend**
-2. The backend authenticates the request and forwards it to **launcher-worker**
-3. The worker spawns a **Claude Code CLI** process, injects the context as a system prompt, and streams Claude's response back as Server-Sent Events (SSE)
-4. The Android app displays the response word-by-word as it arrives
+```
+Android App  →  (HTTP/SSE)  →  launcher-worker  →  AI provider of your choice
+     ↑                               ↑
+  Settings screen             PROVIDER env var
+  (paste URL here)
+```
 
-The worker runs on a **GCP e2-micro VM** (free tier, ~$0/month). It uses your own Anthropic Claude subscription via the CLI — no separate API key or per-token billing.
+When you send a message:
+1. Android reads the **Worker URL** you set in Settings → AI Assistant
+2. Posts your message + launcher context (current app, clipboard, etc.) to `POST /chat`
+3. Worker streams the AI response back word-by-word as Server-Sent Events
+4. Android displays the response as it arrives
+
+### Deployment Options
+
+Run the worker wherever makes sense for you:
+
+| Where | Provider | Cost | Best for |
+|-------|----------|------|----------|
+| Your Mac/PC | `claude-cli` | Free (subscription) | Development |
+| Mac mini home server | `claude-cli` | Free (subscription) | Always-on personal use |
+| GCP e2-micro VM | `claude-cli` | ~$0/month (free tier) | Shared / production |
+| Any server | `anthropic-api` | Pay-per-token | Teams, metered usage |
+| Any server | `openai-compatible` | Varies | OpenRouter, LM Studio |
+| Your local machine | `ollama` | Free | Privacy-first, local models |
+
+### Choosing a Provider
+
+Set `PROVIDER` in your `launcher-worker/.env`:
+
+| `PROVIDER` | What runs | Requires |
+|-----------|-----------|---------|
+| `claude-cli` | Claude Code CLI process | `claude auth` (Anthropic subscription) |
+| `anthropic-api` | Anthropic Messages API | `API_KEY` from console.anthropic.com |
+| `ollama` | Local Ollama server | Ollama installed, `MODEL` set |
+| `openai-compatible` | Any OpenAI-compatible endpoint | `API_BASE_URL` + `API_KEY` |
 
 ---
 
 ## Table of Contents
 
-1. [Launcher Backend](#1-launcher-backend)
-2. [Launcher Worker (Local)](#2-launcher-worker-local)
-3. [Launcher Worker (GCP VM)](#3-launcher-worker-gcp-vm)
-4. [Connect Everything](#4-connect-everything)
-5. [Verify the Full Stack](#5-verify-the-full-stack)
-6. [Troubleshooting](#6-troubleshooting)
+1. [Run the Worker](#1-run-the-worker)
+   - [Option A: Claude CLI (subscription)](#option-a-claude-cli)
+   - [Option B: Anthropic API key](#option-b-anthropic-api)
+   - [Option C: Ollama (local models)](#option-c-ollama)
+   - [Option D: OpenAI-compatible server](#option-d-openai-compatible)
+2. [Deploy to GCP VM (always-on)](#2-deploy-to-gcp-vm)
+3. [Point the Android App to Your Worker](#3-point-the-android-app-to-your-worker)
+4. [Launcher Backend (optional)](#4-launcher-backend-optional)
+5. [Troubleshooting](#5-troubleshooting)
 
 ---
 
-## 1. Launcher Backend
+## 1. Run the Worker
 
-The backend handles AI routing, theme generation, settings sync, and extension marketplace.
+### Prerequisites (all options)
 
-### Prerequisites
-
-- **Node.js 20+**
-  Install: https://nodejs.org or `brew install node`
-- **npm 9+** (included with Node.js)
-
-### Setup
-
-```bash
-cd ai-launcher/launcher-backend
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```bash
-# Server
-PORT=3000
-
-# Worker connection (update with your worker URL after setup)
-LAUNCHER_WORKER_URL=http://localhost:3456
-WORKER_SECRET=change-this-to-a-secure-random-string
-
-# Supabase (optional - for settings sync and themes)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-```
-
-### Start the Backend
-
-```bash
-# Development
-node server.js
-
-# Or with auto-restart on changes
-npm install -g nodemon
-nodemon server.js
-```
-
-**Expected output:**
-```
-🚀 Launcher Backend running on port 3000
-📡 Worker URL: http://localhost:3456
-```
-
-### Verify Backend
-
-```bash
-curl http://localhost:3000/health
-```
-
-**Expected response:**
-```json
-{
-  "status": "healthy",
-  "service": "launcher-backend",
-  "workerUrl": "http://localhost:3456",
-  "timestamp": "2026-02-17T..."
-}
-```
-
----
-
-## 2. Launcher Worker (Local)
-
-The worker runs Claude Code CLI to power AI conversations. Run this locally if you have Claude CLI installed, or on a GCP VM (see Section 4).
-
-### Prerequisites
-
-- **Claude Code CLI** installed and authenticated
-  ```bash
-  # Check if installed
-  claude --version
-
-  # Install if needed
-  npm install -g @anthropic-ai/claude-code
-
-  # Authenticate (requires Anthropic account with Claude subscription)
-  claude auth
-  ```
-
-### Setup
+- **Node.js 20+** — https://nodejs.org or `brew install node`
 
 ```bash
 cd ai-launcher/launcher-worker
-
-# Install dependencies
 npm install
-
-# Configure environment
 cp .env.example .env
 ```
 
-Edit `.env`:
+Pick a provider below and edit `.env` accordingly.
+
+---
+
+### Option A: Claude CLI
+
+Uses your Claude subscription — no API key billing.
 
 ```bash
-WORKER_PORT=3456
-WORKER_SECRET=change-this-to-a-secure-random-string  # Must match backend WORKER_SECRET
-NODE_ENV=development
+# Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# Authenticate
+claude auth
 ```
 
-**Important:** The `WORKER_SECRET` must be the same value in both `launcher-backend/.env` and `launcher-worker/.env`.
-
-### Start the Worker
+`.env`:
+```
+PROVIDER=claude-cli
+WORKER_PORT=3456
+WORKER_SECRET=your-secret-here
+```
 
 ```bash
 node server.js
+# 🤖 Launcher Worker running on port 3456
+# 🔌 Provider: claude-cli
+# ✅ Claude CLI found: /usr/local/bin/claude
 ```
 
-**Expected output:**
+---
+
+### Option B: Anthropic API
+
+Use an Anthropic API key. Any server with internet access — no Claude CLI needed.
+
+`.env`:
 ```
-🤖 Launcher Worker running on port 3456
-✅ Claude CLI found: /usr/local/bin/claude (or your path)
-📁 Sessions dir: /Users/you/.launcher-worker/sessions
+PROVIDER=anthropic-api
+MODEL=claude-opus-4-6
+API_KEY=sk-ant-your-api-key-here
+WORKER_PORT=3456
+WORKER_SECRET=your-secret-here
 ```
 
-### Verify Worker
+```bash
+node server.js
+# 🔌 Provider: anthropic-api | Model: claude-opus-4-6
+```
+
+---
+
+### Option C: Ollama
+
+Run open-source models locally. Completely free, completely private.
+
+```bash
+# Install Ollama: https://ollama.ai
+ollama pull llama3.2   # or mistral, phi3, gemma3, etc.
+```
+
+`.env`:
+```
+PROVIDER=ollama
+MODEL=llama3.2
+WORKER_PORT=3456
+WORKER_SECRET=your-secret-here
+```
+
+```bash
+node server.js
+# 🔌 Provider: ollama | Model: llama3.2
+# 📡 Ollama base URL: http://localhost:11434/v1
+```
+
+---
+
+### Option D: OpenAI-compatible server
+
+Works with OpenRouter, LM Studio, OpenAI, or any compatible API.
+
+`.env` for OpenRouter:
+```
+PROVIDER=openai-compatible
+MODEL=anthropic/claude-opus-4-6
+API_KEY=sk-or-your-openrouter-key
+API_BASE_URL=https://openrouter.ai/api/v1
+WORKER_PORT=3456
+WORKER_SECRET=your-secret-here
+```
+
+`.env` for LM Studio (local):
+```
+PROVIDER=openai-compatible
+MODEL=local-model
+API_BASE_URL=http://localhost:1234/v1
+WORKER_PORT=3456
+WORKER_SECRET=your-secret-here
+```
+
+---
+
+### Verify the Worker
 
 ```bash
 curl http://localhost:3456/health
 ```
 
-**Expected response:**
 ```json
 {
   "status": "healthy",
   "service": "launcher-worker",
-  "claudePath": "/usr/local/bin/claude",
-  "sessionsDir": "/Users/you/.launcher-worker/sessions",
-  "timestamp": "2026-02-17T..."
+  "provider": "claude-cli",
+  "model": "claude-cli",
+  "timestamp": "..."
 }
 ```
 
@@ -173,356 +194,173 @@ curl http://localhost:3456/health
 ```bash
 curl -X POST http://localhost:3456/chat \
   -H "Content-Type: application/json" \
-  -H "x-worker-secret: your-worker-secret" \
+  -H "x-worker-secret: your-secret-here" \
   -d '{
-    "userId": "test-user",
-    "sessionId": "test-session",
-    "message": "Hello! What can you help me with?",
-    "context": {
-      "currentApp": "Home Screen",
-      "installedApps": []
-    }
+    "userId": "test",
+    "message": "What can you help me with?",
+    "context": { "currentApp": "Home Screen" }
   }'
 ```
 
 ---
 
-## 3. Launcher Worker (GCP VM)
+## 2. Deploy to GCP VM
 
-Run the worker on a free GCP e2-micro VM so the AI is always available.
+Run the worker always-on on a free GCP e2-micro VM. Good for sharing with family or as your personal always-available AI.
 
-### Prerequisites
-
-- GCP account with billing enabled (required even for free tier)
-- `gcloud` CLI installed and authenticated:
-  ```bash
-  # Install: https://cloud.google.com/sdk/docs/install
-  gcloud auth login
-  ```
-
-### Step 1: Create the VM
+**Prerequisites:**
+- GCP account with billing enabled
+- `gcloud` CLI: https://cloud.google.com/sdk/docs/install
 
 ```bash
-export GCP_PROJECT_ID="your-gcp-project-id"
+export GCP_PROJECT_ID="your-project-id"
 export VM_NAME="launcher-worker"
 export ZONE="us-west1-b"
 
+# Create VM + firewall rule
 cd ai-launcher/launcher-worker/deploy
 ./setup-vm.sh
 ```
 
-This creates:
-- `e2-micro` VM (free tier: 744 hours/month free)
-- 30GB standard disk
-- Ubuntu 22.04 LTS
-- Firewall rule allowing port 3456
-
-**Expected output:**
-```
-✅ VM created (or already exists)
-✅ Firewall rule created (or already exists)
-📍 VM External IP: 34.x.x.x
-```
-
-### Step 2: SSH into the VM
-
 ```bash
+# SSH in
 gcloud compute ssh $VM_NAME --project=$GCP_PROJECT_ID --zone=$ZONE
 ```
 
-### Step 3: Copy Worker Code to VM
-
-From your **local machine** (open a new terminal):
-
 ```bash
+# Copy code to VM (from local machine in another terminal)
 gcloud compute scp --recurse \
   ~/Documents/GitHub/ai-launcher/launcher-worker \
   $VM_NAME:/home/$USER/ \
-  --project=$GCP_PROJECT_ID \
-  --zone=$ZONE
+  --project=$GCP_PROJECT_ID --zone=$ZONE
 ```
 
-### Step 4: Install Dependencies on VM
-
-Inside the **VM terminal**:
-
 ```bash
-# Download and run install script
+# On the VM: install dependencies
 curl -o install.sh https://raw.githubusercontent.com/tsushanth/ai-launcher/main/launcher-worker/deploy/install-on-vm.sh
-chmod +x install.sh
-./install.sh
-```
+chmod +x install.sh && ./install.sh
 
-This installs:
-- Node.js 20
-- npm
-- Git
-- PM2 (process manager)
-- Claude Code CLI
-
-### Step 5: Configure Worker on VM
-
-```bash
 cd ~/launcher-worker
-
-# Install Node dependencies
 npm install
-
-# Configure environment
 cp .env.example .env
-nano .env  # or vim .env
+nano .env   # Set PROVIDER, WORKER_SECRET, etc.
 ```
-
-Set in `.env`:
-```bash
-WORKER_PORT=3456
-WORKER_SECRET=your-secure-random-secret-here   # Copy this to backend .env too
-NODE_ENV=production
-```
-
-### Step 6: Authenticate Claude CLI on VM
 
 ```bash
-claude auth
-```
-
-This will display a URL like:
-```
-Visit this URL to authenticate:
-https://claude.ai/oauth/authorize?...
-```
-
-Open this URL on your **local computer**, sign in to your Anthropic account, and authorize the CLI. The VM will detect the authorization automatically.
-
-**Verify authentication:**
-```bash
-claude --version
-# Should show version without errors
-```
-
-### Step 7: Start Worker with PM2
-
-```bash
-# Start the worker
+# Start with PM2 (survives reboots)
 pm2 start server.js --name launcher-worker
-
-# Check it's running
-pm2 status
-
-# View logs
-pm2 logs launcher-worker
-
-# Enable auto-start on VM reboot
-pm2 startup
-# Run the command it shows you (something like: sudo env PATH=...)
-
-# Save PM2 process list
+pm2 startup    # run the command it shows
 pm2 save
 ```
 
-### Step 8: Get VM IP and Test
-
-From your **local machine**:
-
 ```bash
+# Get external IP
 EXTERNAL_IP=$(gcloud compute instances describe $VM_NAME \
-  --project=$GCP_PROJECT_ID \
-  --zone=$ZONE \
+  --project=$GCP_PROJECT_ID --zone=$ZONE \
   --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
-echo "Worker URL: http://$EXTERNAL_IP:3456"
-
-# Test health
+echo "Your worker URL: http://$EXTERNAL_IP:3456"
 curl http://$EXTERNAL_IP:3456/health
 ```
 
 ---
 
-## 4. Connect Everything
+## 3. Point the Android App to Your Worker
 
-### Update Backend to Point to Worker
+1. Open AI Launcher on your device
+2. Tap the gear icon (⚙) → **Settings**
+3. Scroll to **AI Assistant**
+4. Enter your **AI Worker URL** — e.g. `http://34.x.x.x:3456` or `http://192.168.1.5:3456`
+5. Enter your **Worker Secret** (same value as `WORKER_SECRET` in `.env`)
+6. Tap **Test Connection**
 
-If using the GCP VM worker, update `launcher-backend/.env`:
+You should see: `Connected: claude-cli` (or whichever provider you set).
 
-```bash
-LAUNCHER_WORKER_URL=http://YOUR_VM_EXTERNAL_IP:3456
-WORKER_SECRET=same-secret-as-worker-env-file
-```
-
-Restart the backend after changing `.env`.
-
-### Android App Backend URL
-
-Currently the Android app is configured for local development. When deploying the backend, update the base URL in:
-
-```
-app/src/main/java/com/launcher/data/LauncherApi.kt
-```
-
-Set `BASE_URL` to your backend URL (e.g., Cloud Run URL or `http://your-server-ip:3000`).
-
-### Start Order
-
-Start in this order:
-1. **Worker** first (backend depends on it)
-2. **Backend** second (Android app talks to it)
-3. **Android app** (connects to backend)
+The settings are saved immediately in SharedPreferences — no restart needed.
 
 ---
 
-## 5. Verify the Full Stack
+## 4. Launcher Backend (optional)
 
-### Check All Services
-
-```bash
-# Backend health
-curl http://localhost:3000/health
-
-# Worker health (local or VM)
-curl http://localhost:3456/health      # local
-curl http://YOUR_VM_IP:3456/health     # GCP VM
-```
-
-### Test AI Chat via Backend
+The `launcher-backend` is optional. It is intended for future features like cloud sync, theme marketplace, and extension management. AI chat goes **directly** from the Android app to the worker.
 
 ```bash
-curl -X POST http://localhost:3000/api/launcher/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "test-user",
-    "message": "What apps do I have installed?",
-    "context": {
-      "currentApp": "Home Screen"
-    }
-  }'
-```
-
-You should see a streaming SSE response with Claude's reply.
-
-### Android App Verification Checklist
-
-- [ ] App installs without errors
-- [ ] App drawer opens (swipe up)
-- [ ] App search returns results (type an app name)
-- [ ] Can set as default launcher
-- [ ] Home screen shows with dock
-- [ ] Settings opens (gear icon)
-- [ ] Extensions screen shows 3 built-in extensions (Calculator, Weather, Notes)
-
----
-
-## 6. Troubleshooting
-
-### Backend Won't Start
-
-**Port already in use:**
-```bash
-lsof -i :3000
-kill -9 <PID>
-```
-
-**Missing .env file:**
-```bash
+cd ai-launcher/launcher-backend
+npm install
 cp .env.example .env
-# Edit with your values
+node server.js
+# 🚀 Launcher Backend running on port 3000
 ```
 
 ---
 
-### Worker Won't Start
+## 5. Troubleshooting
 
-**Claude CLI not found:**
+### "Test Connection" fails
+
+- Confirm the worker is running: `curl http://YOUR_URL:3456/health`
+- Check the URL has no trailing slash and includes the port
+- Check `WORKER_SECRET` in `.env` matches what you entered in Settings
+- On a GCP VM: verify the firewall rule exists for port 3456:
+  ```bash
+  gcloud compute firewall-rules list --project=$GCP_PROJECT_ID
+  ```
+
+### Worker won't start
+
+**Port in use:**
 ```bash
-# Check paths
+lsof -i :3456 && kill -9 <PID>
+```
+
+**Claude CLI not found** (for `claude-cli` provider):
+```bash
 which claude
-ls ~/.local/bin/claude
-ls /opt/homebrew/bin/claude
-
-# If on Mac via VSCode extension
-ls ~/.vscode/extensions/ | grep anthropic
-
-# Reinstall
 npm install -g @anthropic-ai/claude-code
-```
-
-**Claude not authenticated:**
-```bash
 claude auth
-# Follow the OAuth flow
 ```
 
-**Port 3456 in use:**
+**Ollama not responding:**
 ```bash
-lsof -i :3456
-kill -9 <PID>
+ollama serve         # start Ollama if not running
+ollama list          # check models are downloaded
 ```
 
----
+### GCP VM — worker crashes
 
-### GCP VM Issues
-
-**Can't connect to VM worker from internet:**
-```bash
-# Verify firewall rule exists
-gcloud compute firewall-rules describe allow-launcher-worker \
-  --project=$GCP_PROJECT_ID
-
-# Check VM is running
-gcloud compute instances list --project=$GCP_PROJECT_ID
-
-# Check worker is listening inside VM
-sudo netstat -tulpn | grep 3456
-```
-
-**PM2 not starting on reboot:**
-```bash
-pm2 startup
-# Run the exact command it outputs
-pm2 save
-```
-
-**Worker crashes repeatedly:**
 ```bash
 pm2 logs launcher-worker --lines 100
 pm2 describe launcher-worker
 ```
 
----
+### Extensions screen shows "0 installed"
 
-### Extension System
-
-**Extensions screen shows "0 installed":**
-This is a known state after first install. The 3 built-in extensions (Calculator, Weather, Notes) are loaded from the registry. If they don't appear, navigate away from the Extensions screen and back.
+Navigate away from the Extensions screen and back. The 3 built-in extensions (Calculator, Weather, Notes) load from the registry on first view.
 
 ---
 
 ## Cost Summary
 
-| Component | Free Tier | Estimated Cost |
-|-----------|-----------|----------------|
-| GCP e2-micro VM | 744 hours/month free | $0/month |
-| GCP 30GB disk | — | ~$1.50/month |
-| Supabase (database) | 500MB free | $0/month |
-| Firebase (auth) | 50K MAU free | $0/month |
-| Claude API | Uses your Claude subscription | $0 additional |
-| **Total** | | **~$1.50-5/month** |
+| Deployment | Provider | Cost |
+|-----------|----------|------|
+| Your Mac/PC | claude-cli | Free (subscription) |
+| GCP e2-micro VM | claude-cli | ~$1.50/month (disk only) |
+| Any server | anthropic-api | ~$0.01-0.05 per conversation |
+| Local machine | ollama | Free |
+| OpenRouter | openai-compatible | Varies by model |
 
 ---
 
 ## Quick Reference
 
-| Service | Default Port | URL |
-|---------|-------------|-----|
-| Launcher Backend | 3000 | http://localhost:3000 |
-| Launcher Worker | 3456 | http://localhost:3456 |
-| GCP VM Worker | 3456 | http://YOUR_VM_IP:3456 |
+| Item | Value |
+|------|-------|
+| Worker default port | 3456 |
+| Backend default port | 3000 |
+| Worker secret pref key | `ai_worker_secret` |
+| Worker URL pref key | `ai_worker_url` |
+| SharedPreferences file | `launcher_prefs` |
 
-| File | Purpose |
-|------|---------|
-| `launcher-backend/.env` | Backend config (ports, secrets, DB keys) |
-| `launcher-worker/.env` | Worker config (port, secret) |
-| `app/local.properties` | Android SDK path |
-
----
+*For GCP-specific details see [launcher-worker/deploy/DEPLOYMENT.md](launcher-worker/deploy/DEPLOYMENT.md)*
 
 *For GCP-specific deployment details, see [launcher-worker/deploy/DEPLOYMENT.md](launcher-worker/deploy/DEPLOYMENT.md)*
