@@ -102,26 +102,46 @@ WORKER_SECRET=your-secure-random-secret-here-change-this
 NODE_ENV=production
 ```
 
-### Step 6: Authenticate Claude CLI
+### Step 6: Authenticate Claude CLI on the Headless VM
 
-This is the **most important step** - you'll authenticate Claude CLI with your Anthropic account:
+On a headless Linux VM, `claude auth` cannot open a browser. Instead, Claude CLI on Linux reads credentials from a **plaintext JSON file** at `~/.claude/.credentials.json` (it does not use the OS keychain).
+
+**The easiest approach: copy credentials from your local Mac.**
+
+On your **local Mac** (in a new terminal), export the credentials:
 
 ```bash
-claude auth
+# On your local Mac — read OAuth credentials from macOS keychain
+security find-generic-password -s "claude.ai" -w 2>/dev/null | python3 -c "
+import sys, json
+raw = sys.stdin.read().strip()
+# The keychain value is the JSON credentials blob
+print(raw)
+"
 ```
 
-This will:
-1. Open a browser window (or show a URL)
-2. Ask you to sign in to your Anthropic account
-3. Authorize the CLI
-
-**Note:** If you don't have a browser on the VM, it will show a URL like:
-```
-Visit this URL to authenticate:
-https://claude.ai/oauth/authorize?...
+If that doesn't produce output, run `claude auth status` locally and grab the credentials from:
+```bash
+cat ~/.claude/.credentials.json   # may exist on Mac too
 ```
 
-Open this URL on your **local computer**, complete the OAuth flow, and the VM will detect the authorization.
+Then on the **VM**, write the credentials file:
+
+```bash
+mkdir -p ~/.claude
+cat > ~/.claude/.credentials.json << 'EOF'
+{"claudeAiOauth":{"accessToken":"sk-ant-oat01-...","refreshToken":"sk-ant-ort01-...","expiresAt":1234567890000,"scopes":["user:inference","user:profile"],"subscriptionType":"max"},"organizationUuid":"..."}
+EOF
+```
+
+Replace the values with what you copied from your Mac. Then verify:
+
+```bash
+claude auth status
+# Should print: loggedIn: true
+```
+
+> **Why this works:** On Linux, Claude CLI skips the OS keychain and reads `~/.claude/.credentials.json` directly. On macOS it reads from Keychain, but the file path still works as a fallback on both platforms.
 
 ### Step 7: Test the Worker
 
@@ -223,14 +243,19 @@ claude --version
 sudo npm install -g @anthropic-ai/claude-code
 ```
 
-### Claude Auth Failed
+### Claude Auth Failed / `loggedIn: false` on VM
+
+On Linux VMs `claude auth` opens a browser URL but doesn't write credentials automatically. The fix is to write `~/.claude/.credentials.json` directly (see Step 6 above).
 
 ```bash
-# Try authenticating again
-claude auth
+# Verify credentials are in place
+cat ~/.claude/.credentials.json   # should show your token JSON
 
-# Check if authenticated
-claude --version
+# Check auth status
+claude auth status   # should print loggedIn: true
+
+# If the access token has expired, re-run claude auth on your LOCAL Mac
+# and copy the fresh credentials file to the VM
 ```
 
 ### Worker Won't Start

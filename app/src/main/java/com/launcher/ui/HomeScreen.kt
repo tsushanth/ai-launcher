@@ -50,6 +50,7 @@ fun HomeScreen(
     var selectedFolder by remember { mutableStateOf<DesktopItem.Folder?>(null) }
     var showWallpaperPicker by remember { mutableStateOf(false) }
     var longPressedItem by remember { mutableStateOf<LongPressItem?>(null) }
+    var showAiChat by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -121,6 +122,26 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             )
 
+            // AI orb button
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                FilledTonalButton(
+                    onClick = { showAiChat = true },
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI", modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ask AI")
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             // Dock at bottom
             Dock(
                 apps = dockApps,
@@ -140,6 +161,11 @@ fun HomeScreen(
             )
 
             Spacer(Modifier.height(24.dp))
+        }
+
+        // AI Chat overlay
+        if (showAiChat) {
+            AiChatScreen(onDismiss = { showAiChat = false })
         }
 
         // Settings button (top right)

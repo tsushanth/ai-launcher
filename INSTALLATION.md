@@ -54,8 +54,9 @@ Set `PROVIDER` in your `launcher-worker/.env`:
    - [Option D: OpenAI-compatible server](#option-d-openai-compatible)
 2. [Deploy to GCP VM (always-on)](#2-deploy-to-gcp-vm)
 3. [Point the Android App to Your Worker](#3-point-the-android-app-to-your-worker)
-4. [Launcher Backend (optional)](#4-launcher-backend-optional)
-5. [Troubleshooting](#5-troubleshooting)
+4. [Test the AI Chat](#4-test-the-ai-chat)
+5. [Launcher Backend (optional)](#6-launcher-backend-optional)
+6. [Troubleshooting](#7-troubleshooting)
 
 ---
 
@@ -280,7 +281,30 @@ The settings are saved immediately in SharedPreferences — no restart needed.
 
 ---
 
-## 4. Launcher Backend (optional)
+## 4. Test the AI Chat
+
+Once the worker is running and the app is pointed at it:
+
+1. On the home screen, tap **Ask AI** (the button above the app dock)
+2. The AI chat screen opens with a **Message** input field (keyboard appears automatically)
+3. Type a message and tap the green **send arrow**
+4. Your message appears as a green bubble on the right; the AI response streams in word-by-word on the left
+5. Tap **←** (back arrow) to return to the home screen
+
+**Quick curl test from your computer** (replace URL and secret):
+
+```bash
+curl -N -X POST http://34.x.x.x:3456/chat \
+  -H "Content-Type: application/json" \
+  -H "x-worker-secret: your-secret-here" \
+  -d '{"userId":"test","message":"What can you help me with?","context":{}}'
+```
+
+You should see SSE chunks streaming: `data: {"type":"chunk","text":"I can help..."}`.
+
+---
+
+## 6. Launcher Backend (optional)
 
 The `launcher-backend` is optional. It is intended for future features like cloud sync, theme marketplace, and extension management. AI chat goes **directly** from the Android app to the worker.
 
@@ -294,7 +318,7 @@ node server.js
 
 ---
 
-## 5. Troubleshooting
+## 7. Troubleshooting
 
 ### "Test Connection" fails
 
