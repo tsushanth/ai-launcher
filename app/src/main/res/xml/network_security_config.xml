@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Allow cleartext HTTP for self-hosted AI worker connections.
+    Users may run the worker on a local IP, home server, or cloud VM without HTTPS.
+    The worker secret provides authentication; HTTPS can be added via a reverse proxy.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
