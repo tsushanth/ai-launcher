@@ -66,9 +66,14 @@ function chatWithClaudeCLI(fullPrompt, userId, sessionId, res, req) {
 
     console.log(`Spawning Claude CLI: ${claudeCli}`);
 
-    const claudeProcess = spawn(claudeCli, ['--session', sessionDir], {
+    const claudeProcess = spawn(claudeCli, [
+        '--print',
+        '--dangerously-skip-permissions',
+        '--output-format', 'text'
+    ], {
         cwd: sessionDir,
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, HOME: os.homedir() }
     });
 
     claudeProcess.stdin.write(fullPrompt + '\n');
@@ -109,7 +114,7 @@ function chatWithClaudeCLI(fullPrompt, userId, sessionId, res, req) {
         res.end();
     });
 
-    req.on('close', () => {
+    res.on('close', () => {
         claudeProcess.kill();
     });
 }
